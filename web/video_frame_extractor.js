@@ -57,13 +57,13 @@ app.registerExtension({
                 loadButton.serialize = false;
                 
                 // 添加视频名称显示
-                const videoNameWidget = node.addWidget("text", "当前视频", "未选择");
+                const videoNameWidget = node.addWidget("text", "当前视频", "未选择", () => {}, {});
                 videoNameWidget.disabled = true;
                 videoNameWidget.serialize = false;
                 node.videoNameWidget = videoNameWidget;
                 
                 // 添加帧数显示
-                const frameCountWidget = node.addWidget("text", "视频帧数", "0");
+                const frameCountWidget = node.addWidget("text", "视频帧数", "0", () => {}, {});
                 frameCountWidget.disabled = true;
                 frameCountWidget.serialize = false;
                 node.frameCountWidget = frameCountWidget;
@@ -91,6 +91,7 @@ app.registerExtension({
                 container.style.background = "#1a1a1a";
                 container.style.borderRadius = "4px";
                 container.style.overflow = "hidden";
+                container.style.minHeight = "20px";
                 
                 // 创建视频元素
                 const videoEl = document.createElement("video");
@@ -98,6 +99,7 @@ app.registerExtension({
                 videoEl.loop = true;
                 videoEl.muted = true;
                 videoEl.autoplay = true;
+                videoEl.playsInline = true;
                 videoEl.style.width = "100%";
                 videoEl.style.display = "none";
                 
@@ -105,6 +107,11 @@ app.registerExtension({
                 const imgEl = document.createElement("img");
                 imgEl.style.width = "100%";
                 imgEl.style.display = "none";
+                
+                // 错误处理
+                videoEl.addEventListener("error", (e) => {
+                    console.log("视频加载失败:", e);
+                });
                 
                 container.appendChild(videoEl);
                 container.appendChild(imgEl);
@@ -122,26 +129,32 @@ app.registerExtension({
                 
                 // 计算widget尺寸
                 previewWidget.computeSize = function(width) {
-                    if (this.aspectRatio && this.parentEl.style.display !== "none") {
+                    if (this.aspectRatio && (videoEl.style.display !== "none" || imgEl.style.display !== "none")) {
                         let height = (node.size[0] - 20) / this.aspectRatio;
                         if (!(height > 0)) {
                             height = 0;
                         }
                         return [width, height + 10];
                     }
-                    return [width, -4];
+                    return [width, 20];
                 };
                 
                 // 视频加载完成后调整尺寸
                 videoEl.addEventListener("loadedmetadata", () => {
-                    previewWidget.aspectRatio = videoEl.videoWidth / videoEl.videoHeight;
-                    fitHeight(node);
+                    if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                        previewWidget.aspectRatio = videoEl.videoWidth / videoEl.videoHeight;
+                        videoEl.style.display = "block";
+                        fitHeight(node);
+                    }
                 });
                 
                 // 图片加载完成后调整尺寸
                 imgEl.addEventListener("load", () => {
-                    previewWidget.aspectRatio = imgEl.naturalWidth / imgEl.naturalHeight;
-                    fitHeight(node);
+                    if (imgEl.naturalWidth > 0 && imgEl.naturalHeight > 0) {
+                        previewWidget.aspectRatio = imgEl.naturalWidth / imgEl.naturalHeight;
+                        imgEl.style.display = "block";
+                        fitHeight(node);
+                    }
                 });
                 
                 // 鼠标悬停播放
@@ -230,12 +243,13 @@ app.registerExtension({
                     app.graph.setDirtyCanvas(true, true);
                     
                     // 显示本地视频预览
-                    if (node.previewWidget) {
+                    if (node.previewWidget && node.previewWidget.videoEl) {
                         const videoUrl = URL.createObjectURL(file);
                         node.previewWidget.videoEl.src = videoUrl;
-                        node.previewWidget.videoEl.style.display = "block";
                         node.previewWidget.imgEl.style.display = "none";
-                        node.previewWidget.videoEl.play();
+                        node.previewWidget.videoEl.play().catch(e => {
+                            console.log("视频自动播放失败:", e);
+                        });
                     }
                     
                     // 上传文件到ComfyUI
