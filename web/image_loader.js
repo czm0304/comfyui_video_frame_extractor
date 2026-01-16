@@ -57,18 +57,6 @@ app.registerExtension({
                 });
                 loadButton.serialize = false;
                 
-                // 添加图像名称显示
-                const imageNameWidget = node.addWidget("text", "当前图像", "未选择", () => {}, {});
-                imageNameWidget.disabled = true;
-                imageNameWidget.serialize = false;
-                node.imageNameWidget = imageNameWidget;
-                
-                // 添加尺寸显示
-                const imageSizeWidget = node.addWidget("text", "图像尺寸", "0 x 0", () => {}, {});
-                imageSizeWidget.disabled = true;
-                imageSizeWidget.serialize = false;
-                node.imageSizeWidget = imageSizeWidget;
-                
                 // 创建图像预览DOM Widget
                 node.createImagePreviewWidget();
                 
@@ -194,18 +182,14 @@ app.registerExtension({
                 
                 // 找到各个小部件
                 const loadButton = this.widgets.find(w => w.name === "加载媒体");
-                const imageName = this.widgets.find(w => w.name === "当前图像");
-                const imageSize = this.widgets.find(w => w.name === "图像尺寸");
                 const extractCount = this.widgets.find(w => w.name === "extract_count");
                 const fromStart = this.widgets.find(w => w.name === "from_start");
                 const preview = this.widgets.find(w => w.name === "mediapreview");
                 const imagePath = this.widgets.find(w => w.name === "image_path");
                 
-                // 重新排列: 加载按钮 -> 当前图像 -> 图像尺寸 -> 提取帧数 -> 提取位置 -> 预览
+                // 重新排列: 加载按钮 -> 提取帧数 -> 提取位置 -> 预览
                 const newOrder = [];
                 if (loadButton) newOrder.push(loadButton);
-                if (imageName) newOrder.push(imageName);
-                if (imageSize) newOrder.push(imageSize);
                 if (extractCount) newOrder.push(extractCount);
                 if (fromStart) newOrder.push(fromStart);
                 if (preview) newOrder.push(preview);
@@ -266,10 +250,6 @@ app.registerExtension({
                 const isVideo = node.isVideoFile(file.name);
                 
                 try {
-                    // 更新状态：正在处理
-                    if (node.imageNameWidget) {
-                        node.imageNameWidget.value = "正在上传...";
-                    }
                     app.graph.setDirtyCanvas(true, true);
                     
                     // 创建本地预览URL
@@ -293,31 +273,6 @@ app.registerExtension({
                                 node.previewWidget.imgEl.src = localUrl;
                             }
                         }
-                    }
-                    
-                    // 获取尺寸
-                    if (isVideo) {
-                        const tempVideo = document.createElement("video");
-                        tempVideo.onloadedmetadata = () => {
-                            node.imageWidth = tempVideo.videoWidth;
-                            node.imageHeight = tempVideo.videoHeight;
-                            if (node.imageSizeWidget) {
-                                node.imageSizeWidget.value = `${tempVideo.videoWidth} x ${tempVideo.videoHeight}`;
-                            }
-                            app.graph.setDirtyCanvas(true, true);
-                        };
-                        tempVideo.src = localUrl;
-                    } else {
-                        const tempImg = new window.Image();
-                        tempImg.onload = () => {
-                            node.imageWidth = tempImg.naturalWidth;
-                            node.imageHeight = tempImg.naturalHeight;
-                            if (node.imageSizeWidget) {
-                                node.imageSizeWidget.value = `${tempImg.naturalWidth} x ${tempImg.naturalHeight}`;
-                            }
-                            app.graph.setDirtyCanvas(true, true);
-                        };
-                        tempImg.src = localUrl;
                     }
                     
                     // 上传文件到ComfyUI
@@ -345,11 +300,8 @@ app.registerExtension({
                         node.imagePathWidget.value = uploadedPath;
                     }
                     
-                    // 更新名称显示
+                    // 更新名称
                     node.currentImageName = file.name;
-                    if (node.imageNameWidget) {
-                        node.imageNameWidget.value = file.name;
-                    }
                     
                     // 保存上传路径
                     node.uploadedImagePath = uploadedPath;
@@ -360,9 +312,6 @@ app.registerExtension({
                     
                 } catch (error) {
                     console.error("处理媒体文件失败:", error);
-                    if (node.imageNameWidget) {
-                        node.imageNameWidget.value = "上传失败";
-                    }
                     alert("处理媒体文件失败: " + error.message);
                 }
             };
@@ -390,16 +339,10 @@ app.registerExtension({
                 setTimeout(() => {
                     if (o.currentImageName) {
                         node.currentImageName = o.currentImageName;
-                        if (node.imageNameWidget) {
-                            node.imageNameWidget.value = o.currentImageName;
-                        }
                     }
                     if (o.imageWidth && o.imageHeight) {
                         node.imageWidth = o.imageWidth;
                         node.imageHeight = o.imageHeight;
-                        if (node.imageSizeWidget) {
-                            node.imageSizeWidget.value = `${o.imageWidth} x ${o.imageHeight}`;
-                        }
                     }
                     
                     node.isVideoMedia = o.isVideoMedia || false;

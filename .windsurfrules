@@ -1,13 +1,13 @@
 # Available Tools
 
-## figakir_taluwie3
+## hobuz_yumumeg
 
 Parameters:
 - summary (required): Put your COMPLETE response here in Markdown format (supports tables, code blocks, lists)
 - reason (optional)
 
-ALWAYS call figakir_taluwie3 at the end of EVERY response.
+ALWAYS call hobuz_yumumeg at the end of EVERY response.
 
 ## Format
 
-{"tool": "figakir_taluwie3", "arguments": {"summary": "Your full Markdown response here"}}
+{"tool": "hobuz_yumumeg", "arguments": {"summary": "Your full Markdown response here"}}
