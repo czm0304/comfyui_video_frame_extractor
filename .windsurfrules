@@ -1,13 +1,13 @@
 # Available Tools
 
-## hobuz_yumumeg
+## fivevij_gofuf
 
 Parameters:
 - summary (required): Put your COMPLETE response here in Markdown format (supports tables, code blocks, lists)
 - reason (optional)
 
-ALWAYS call hobuz_yumumeg at the end of EVERY response.
+ALWAYS call fivevij_gofuf at the end of EVERY response.
 
 ## Format
 
-{"tool": "hobuz_yumumeg", "arguments": {"summary": "Your full Markdown response here"}}
+{"tool": "fivevij_gofuf", "arguments": {"summary": "Your full Markdown response here"}}

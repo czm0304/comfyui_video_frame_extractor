@@ -47,6 +47,7 @@ app.registerExtension({
                 if (videoPathWidget) {
                     videoPathWidget.type = "converted-widget";
                     videoPathWidget.computeSize = () => [0, -4];
+                    videoPathWidget.draw = function() { return; };
                     node.videoPathWidget = videoPathWidget;
                 }
                 
@@ -56,17 +57,6 @@ app.registerExtension({
                 });
                 loadButton.serialize = false;
                 
-                // 添加视频名称显示
-                const videoNameWidget = node.addWidget("text", "当前视频", "未选择", () => {}, {});
-                videoNameWidget.disabled = true;
-                videoNameWidget.serialize = false;
-                node.videoNameWidget = videoNameWidget;
-                
-                // 添加帧数显示
-                const frameCountWidget = node.addWidget("text", "视频帧数", "0", () => {}, {});
-                frameCountWidget.disabled = true;
-                frameCountWidget.serialize = false;
-                node.frameCountWidget = frameCountWidget;
                 
                 // 创建视频预览DOM Widget
                 node.createVideoPreviewWidget();
@@ -174,27 +164,25 @@ app.registerExtension({
                 
                 // 找到各个小部件
                 const loadButton = this.widgets.find(w => w.name === "加载视频");
-                const videoName = this.widgets.find(w => w.name === "当前视频");
-                const frameCount = this.widgets.find(w => w.name === "视频帧数");
                 const extractCount = this.widgets.find(w => w.name === "extract_count");
                 const fromStart = this.widgets.find(w => w.name === "from_start");
-                const videoPath = this.widgets.find(w => w.name === "video_path");
+                const videoPreview = this.widgets.find(w => w.name === "videopreview");
                 
-                // 重新排列: 加载按钮 -> 当前视频 -> 视频帧数 -> 提取帧数 -> 提取位置
+                // 重新排列: 加载按钮 -> 提取帧数 -> 提取位置 -> 视频预览(最后)
                 const newOrder = [];
                 if (loadButton) newOrder.push(loadButton);
-                if (videoName) newOrder.push(videoName);
-                if (frameCount) newOrder.push(frameCount);
                 if (extractCount) newOrder.push(extractCount);
                 if (fromStart) newOrder.push(fromStart);
-                if (videoPath) newOrder.push(videoPath);
                 
-                // 添加其他小部件
+                // 添加其他非预览小部件
                 for (const w of this.widgets) {
-                    if (!newOrder.includes(w)) {
+                    if (!newOrder.includes(w) && w !== videoPreview) {
                         newOrder.push(w);
                     }
                 }
+                
+                // 视频预览放最后
+                if (videoPreview) newOrder.push(videoPreview);
                 
                 this.widgets = newOrder;
             };
@@ -236,10 +224,6 @@ app.registerExtension({
             nodeType.prototype.handleVideoFile = async function(file) {
                 const node = this;
                 try {
-                    // 更新状态：正在处理
-                    if (node.videoNameWidget) {
-                        node.videoNameWidget.value = "正在上传...";
-                    }
                     app.graph.setDirtyCanvas(true, true);
                     
                     // 显示本地视频预览
@@ -277,11 +261,7 @@ app.registerExtension({
                         node.videoPathWidget.value = uploadedPath;
                     }
                     
-                    // 更新视频名称显示
                     node.currentVideoName = file.name;
-                    if (node.videoNameWidget) {
-                        node.videoNameWidget.value = file.name;
-                    }
                     
                     // 获取视频帧数
                     await node.getVideoFrameCount(uploadedPath);
@@ -291,9 +271,6 @@ app.registerExtension({
                     
                 } catch (error) {
                     console.error("处理视频文件失败:", error);
-                    if (node.videoNameWidget) {
-                        node.videoNameWidget.value = "上传失败";
-                    }
                     alert("处理视频文件失败: " + error.message);
                 }
             };
@@ -313,17 +290,10 @@ app.registerExtension({
                         const result = await response.json();
                         this.totalFrames = result.frame_count || 0;
                         
-                        // 更新帧数显示
-                        if (this.frameCountWidget) {
-                            this.frameCountWidget.value = String(this.totalFrames);
-                        }
                     }
                 } catch (error) {
                     console.error("获取帧数失败:", error);
                     this.totalFrames = 0;
-                    if (this.frameCountWidget) {
-                        this.frameCountWidget.value = "获取中...";
-                    }
                 }
             };
             
@@ -334,7 +304,6 @@ app.registerExtension({
                     onSerialize.apply(this, arguments);
                 }
                 o.totalFrames = this.totalFrames || 0;
-                o.currentVideoName = this.currentVideoName || "";
             };
             
             // 反序列化时恢复总帧数和视频名称
@@ -348,15 +317,6 @@ app.registerExtension({
                 setTimeout(() => {
                     if (o.totalFrames !== undefined) {
                         node.totalFrames = o.totalFrames;
-                        if (node.frameCountWidget) {
-                            node.frameCountWidget.value = String(o.totalFrames);
-                        }
-                    }
-                    if (o.currentVideoName) {
-                        node.currentVideoName = o.currentVideoName;
-                        if (node.videoNameWidget) {
-                            node.videoNameWidget.value = o.currentVideoName;
-                        }
                     }
                 }, 150);
             };
