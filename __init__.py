@@ -1,17 +1,20 @@
 from .nodes.video_frame_extractor import VideoFrameExtractor
 from .nodes.image_loader import ImageLoaderWithPreview
 from .nodes.video_frame_processor import VideoFrameProcessor
+from .nodes.ltx_director_ic_input import LTXDirectorICInput
 
 NODE_CLASS_MAPPINGS = {
     "VideoFrameExtractor": VideoFrameExtractor,
     "ImageLoaderWithPreview": ImageLoaderWithPreview,
     "VideoFrameProcessor": VideoFrameProcessor,
+    "LTXDirectorICInput": LTXDirectorICInput,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "VideoFrameExtractor": "视频帧提取器",
     "ImageLoaderWithPreview": "媒体提取器",
     "VideoFrameProcessor": "视频帧处理",
+    "LTXDirectorICInput": "LTX Director (IC-LoRA Input)",
 }
 
 WEB_DIRECTORY = "./web"

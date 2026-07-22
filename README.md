@@ -11,9 +11,15 @@
 - **灵活的提取位置**: 从视频开头或结尾提取帧
 
 ### 视频帧提取器节点
-- **视频加载**: 点击"加载视频"按钮选择视频文件
-- **自动识别帧数**: 加载视频后自动显示视频的总帧数
+- **视频连接输入**: 接收 ComfyUI 原生 `VIDEO` 连接
+- **自动识别帧数**: 自动读取输入视频的总帧数
 - **灵活的帧提取**: 设置帧数和提取位置
+
+### LTX Director (IC-LoRA Input) 节点
+- **独立克隆节点**: 节点 ID 为 `LTXDirectorICInput`，不会覆盖原版 LTX Director
+- **IC-LoRA 视频连接**: 新增 `IC-LoRA Input: VIDEO` 输入端
+- **自动轨道映射**: 连接视频后自动在 `IC-LoRA Input` 轨道创建或更新对应片段
+- **运行时兼容**: 非文件型 VIDEO 会在执行时保存到输入目录并注入 motion guide 数据
 
 ### 支持的格式
 - **图像**: PNG, JPG, JPEG, GIF, BMP, WebP, TIFF
@@ -92,16 +98,14 @@ pip install -r comfyui_video_frame_extractor/requirements.txt
 
 ### 使用方法
 
-1. 点击节点中的"加载视频"按钮
-2. 选择视频文件
-3. "视频帧数"会自动显示总帧数
-4. 设置提取帧数和位置
-5. 连接输出到后续节点
+1. 将 `VIDEO` 输出连接到节点的 `video` 输入端
+2. 设置提取帧数和位置
+3. 连接输出到后续节点
 
 ### 输入参数
 | 参数名 | 类型 | 说明 |
 |--------|------|------|
-| video_path | STRING | 视频文件路径（通过按钮选择） |
+| video | VIDEO | 连接线视频输入 |
 | extract_count | INT | 要提取的帧数，范围1-9999 |
 | from_start | BOOLEAN | 提取位置开关，开启=从开头，关闭=从结尾 |
 
@@ -110,6 +114,21 @@ pip install -r comfyui_video_frame_extractor/requirements.txt
 |--------|------|------|
 | images | IMAGE | 提取的帧图像（批量张量） |
 | total_frames | INT | 视频的总帧数 |
+
+---
+
+## 节点3: LTX Director (IC-LoRA Input)
+
+在ComfyUI中搜索 **"LTX Director (IC-LoRA Input)"** 或 **"LTXDirectorICInput"**
+
+### 使用方法
+
+1. 将前一个节点的 `VIDEO` 输出连接到 `IC-LoRA Input` 输入端
+2. 如果上游是 `Load Video` 等文件型节点，视频会立即显示在时间轴的 `IC-LoRA Input` 轨道
+3. 其他 VIDEO 来源会先显示连接占位片段，执行后自动保存视频并更新轨道
+4. 将 `motion_guide_data` 输出连接到 LTX Director Guide 的对应输入
+
+连接输入生成的片段默认从第 0 帧开始，强度为 `1.0`，attention strength 为 `0.65`。
 
 ---
 
